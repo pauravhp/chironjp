@@ -13,6 +13,7 @@ from chironjp import browser_tools
 from chironjp.runner import (
     _EMPLOYER_CONSTRAINTS_JS,
     _IDENTITY_JS,
+    _browser_daemon_name,
     _ensure_application_target,
     _validated_employer_constraints,
     claim_and_run,
@@ -43,6 +44,13 @@ class ScriptedCDP:
 
 
 class RunnerIntegrityTests(unittest.TestCase):
+    def test_browser_daemon_identity_binds_worker_application_and_attempt(self):
+        baseline = _browser_daemon_name("worker-one", "app-one", "att-one")
+        self.assertRegex(baseline, r"^chironjp_[0-9a-f]{32}$")
+        self.assertNotEqual(baseline, _browser_daemon_name("worker-two", "app-one", "att-one"))
+        self.assertNotEqual(baseline, _browser_daemon_name("worker-one", "app-two", "att-one"))
+        self.assertNotEqual(baseline, _browser_daemon_name("worker-one", "app-one", "att-two"))
+
     def setUp(self):
         self.fixture = review_flow_fixtures.ReviewFlowTests(
             "test_controller_readback_publishes_exact_retained_review"
@@ -326,6 +334,12 @@ class RunnerIntegrityTests(unittest.TestCase):
         self.assertEqual(captured["HERMES_HOME"], str(self.worker.hermes_home))
         self.assertNotIn("--in", captured["command"])
         self.assertEqual(captured["cwd"], Path(result["workspace"]))
+        self.assertRegex(captured["BU_NAME"], r"^chironjp_[0-9a-f]{32}$")
+        self.assertEqual(captured["BH_RUNTIME_DIR_SHARED"], "1")
+        self.assertEqual(
+            captured["CHIRONJP_BROWSER_HARNESS"],
+            str(self.registry.runtime_root / "browser-venv" / "bin" / "browser-harness"),
+        )
         self.assertEqual(
             captured["PATH"].split(":", 1)[0],
             str(self.registry.runtime_root / "browser-venv" / "bin"),

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import fcntl
+import hashlib
 import json
 import os
 import re
@@ -28,7 +29,8 @@ WORKER_REASONING = "high"
 RUN_PROMPT = """Own the one browser-preparation request in
 $BH_AGENT_WORKSPACE/run-brief.json. Use chiron-application-executor and the
 copied agent_helpers.py. Prepare the exact retained target to guarded Review;
-never activate a final action. Write review.json with only the documented
+invoke the browser runtime only through $CHIRONJP_BROWSER_HARNESS and preserve
+the supplied BU_NAME. Never activate a final action. Write review.json with only the documented
 fields, then execute finish_argv as an argv array without a shell. Exit while
 leaving Chromium and the exact application target open."""
 
@@ -37,6 +39,11 @@ def _workspace(worker: Worker, attempt_id: str) -> Path:
     root = worker.workspace / "attempts" / attempt_id
     private_dir(root)
     return root
+
+
+def _browser_daemon_name(worker_id: str, application_id: str, attempt_id: str) -> str:
+    identity = f"{worker_id}:{application_id}:{attempt_id}".encode("utf-8")
+    return "chironjp_" + hashlib.sha256(identity).hexdigest()[:32]
 
 
 def prepare_workspace(store: Store, registry: Registry, attempt_id: str) -> Path:
@@ -54,6 +61,8 @@ def prepare_workspace(store: Store, registry: Registry, attempt_id: str) -> Path
         raise ValueError("canonical profile changed after package admission")
     profile = json.loads(profile_path.read_text(encoding="utf-8"))
     review_file = workspace / "review.json"
+    daemon_name = _browser_daemon_name(worker.id, str(context["application_id"]), attempt_id)
+    browser_bin = registry.runtime_root / "browser-venv" / "bin"
     brief = {
         "contract": "chironjp-browser-run-v1",
         "attempt_id": attempt_id,
@@ -66,6 +75,11 @@ def prepare_workspace(store: Store, registry: Registry, attempt_id: str) -> Path
         "company": context["company"],
         "role": context["role"],
         "job_description": context["description"],
+        "browser_runtime": {
+            "browser_harness": str(browser_bin / "browser-harness"),
+            "browser_use": str(browser_bin / "browser-use"),
+            "daemon_name": daemon_name,
+        },
         "canonical_profile": profile,
         "package": {
             "resume_path": context["resume_path"],
@@ -418,6 +432,8 @@ def run_attempt(
     brief_path.write_text(json.dumps(brief, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     private_file(brief_path)
     usage_path = workspace / "usage.json"
+    browser_bin = registry.runtime_root / "browser-venv" / "bin"
+    daemon_name = _browser_daemon_name(worker.id, str(context["application_id"]), attempt_id)
     command = [
         hermes_cli(), "-p", worker.hermes_profile,
         "--model", WORKER_MODEL, "--provider", WORKER_PROVIDER,
@@ -428,11 +444,15 @@ def run_attempt(
     environment = {
         **os.environ,
         "HERMES_HOME": str(worker.hermes_home),
-        "PATH": f"{registry.runtime_root / 'browser-venv' / 'bin'}:{os.environ.get('PATH', '')}",
+        "PATH": f"{browser_bin}:{os.environ.get('PATH', '')}",
+        "CHIRONJP_BROWSER_HARNESS": str(browser_bin / "browser-harness"),
+        "CHIRONJP_BROWSER_USE": str(browser_bin / "browser-use"),
+        "BU_NAME": daemon_name,
         "BROWSER_CDP_URL": worker.cdp_url,
         "BU_CDP_URL": worker.cdp_url,
         "BH_AGENT_WORKSPACE": str(workspace),
         "BH_RUNTIME_DIR": str(registry.runtime_root / "browser-use-runtime" / worker.id),
+        "BH_RUNTIME_DIR_SHARED": "1",
         "BH_TMP_DIR": str(workspace),
         "CHIRON_APPLICATION_ID": str(context["application_id"]),
         "CHIRON_ATTEMPT_ID": attempt_id,
