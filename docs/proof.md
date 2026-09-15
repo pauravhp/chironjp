@@ -18,13 +18,19 @@ application is human-only regardless of what the site calls it.
 ## Historical operational aggregate
 
 As of 2026-09-15 06:18 UTC, an audited aggregate snapshot contained 23
-canonical recorded submissions from non-public, multi-version operation across
-10 ATS families. Fifteen were backed by rendered employer-confirmation
+canonical recorded submissions from non-public, multi-version operation.
+Fifteen were backed by rendered employer-confirmation
 evidence: 11 historical final-action confirmations, two human-desktop
 confirmations, and two historical guard-violation submissions. The other eight
 were owner-reported submission records. These records span earlier versions and
 submission behaviors. The Xsolla accepted offer described in the README belongs
 to an earlier non-public version and is separate from this aggregate.
+
+Separately, application preparation reached durable Review across 10 observed
+ATS families. The submission count and Review-stage family coverage have
+different denominators and are not combined. These figures are transcribed from
+the owner-authorized private read-only audit handoff `METRICS_AND_BANK.md`; no
+new public-build database query was used.
 
 This is a count of canonical operational records, not raw application evidence.
 No raw IDs or personal details are published here. It provides no conversion
