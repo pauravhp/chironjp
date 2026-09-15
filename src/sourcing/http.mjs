@@ -29,7 +29,7 @@ export async function fetchJson(url, options = {}) {
       redirect: 'error',
       headers: {
         accept: 'application/json',
-        'user-agent': 'chironjp/0.1 (+https://github.com/paurav/chironjp)',
+        'user-agent': 'chironjp/0.1 (+https://github.com/pauravhp/chironjp)',
         ...headers,
       },
       signal: controller.signal,

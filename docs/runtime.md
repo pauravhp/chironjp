@@ -155,8 +155,10 @@ ports.
 
 The retained Review page shows the exact resume and live desktop. Take control
 pauses that application's producers, removes only Chiron's final guard, and
-enables input on the worker-owned VNC process. The phone keyboard forwards to a
-field focused in the remote form only while the owner controls the session.
+enables input on the worker-owned VNC process. The phone composer keeps typed or
+pasted text visible locally; only its explicit **Insert text** action forwards
+the complete value once to the field the owner focused in the remote form, and
+only while the owner controls the session.
 Return control switches VNC back to view-only and re-arms the guard before any
 producer can resume. If cleanup cannot prove those postconditions, ownership is
 shown as uncertain and Return remains retryable.

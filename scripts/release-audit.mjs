@@ -62,7 +62,7 @@ const SECRET_PATTERNS = [
     'GitHub access token'],
   ['SLACK_TOKEN', /\bxox[baprs]-[A-Za-z0-9-]{20,}\b/g, 'Slack token'],
   ['BEARER_TOKEN', /\bBearer\s+[A-Za-z0-9._~+\/-]{20,}={0,2}\b/gi, 'bearer token'],
-  ['SECRET_ASSIGNMENT', /\b(?:api[_-]?key|access[_-]?token|auth[_-]?token|client[_-]?secret|password|passwd|secret[_-]?key)\b\s*[:=]\s*["']?([^\s"'`,;}{]{12,})/gi,
+  ['SECRET_ASSIGNMENT', /\b(?:api[_-]?key|access[_-]?token|auth[_-]?token|client[_-]?secret|password|passwd|secret[_-]?key|op[_-]?connect[_-]?token|op[_-]?service[_-]?account[_-]?token|chironjp[_-]?review[_-]?password[_-]?hash)\b\s*[:=]\s*["']?([^\s"'`,;}{]{12,})/gi,
     'hard-coded credential-like value'],
 ];
 
@@ -85,7 +85,7 @@ const IDENTITY_PATTERNS = [
 ];
 
 const FORBIDDEN_SOURCE_NAMES = [
-  ['FORBIDDEN_PRIVATE_SOURCE', new RegExp(['jobpipe', 'chiron'].join('-'), 'gi'),
+  ['FORBIDDEN_PRIVATE_SOURCE', new RegExp(['job', 'pipe', 'chiron'].join('[\\s_-]*'), 'gi'),
     'private source-tree name'],
   ['FORBIDDEN_PRODUCT_NAME', new RegExp(['intern', 'insider'].join('[\\s_-]*'), 'gi'),
     'forbidden private product/source name'],

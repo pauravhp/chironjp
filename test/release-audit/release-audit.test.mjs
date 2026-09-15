@@ -18,6 +18,12 @@ test('finds release-blocking classes in a runtime-only unsafe fixture', async (t
   t.after(() => rm(root, { recursive: true, force: true }));
   await writeFile(path.join(root, 'LICENSE'), 'MIT\n');
   const privateSource = [['job', 'pipe'].join(''), 'chiron'].join('-');
+  const privateSourceAliases = [
+    [['job', 'pipe'].join(''), 'chiron'].join(' '),
+    [['job', 'pipe'].join(''), 'chiron'].join('_'),
+    [['job', 'pipe'].join(''), 'chiron'].join('-'),
+    ['job', 'pipe', 'chiron'].join(''),
+  ];
   const forbiddenAliases = [
     ['intern', 'insider'].join(' '),
     ['intern', 'insider'].join('_'),
@@ -26,12 +32,16 @@ test('finds release-blocking classes in a runtime-only unsafe fixture', async (t
   ];
   const unsafeText = [
     ['Copied from /', ['home', 'alice', 'private-work', privateSource, 'config.json'].join('/')].join(''),
+    `Private source aliases: ${privateSourceAliases.join(', ')}`,
     ['Private endpoint ', ['192', '168', '10', '22'].join('.'), ':8080'].join(''),
     `Aliases: ${forbiddenAliases.join(', ')}`,
     ['Contact ', ['recruiting-person', 'real-company.co'].join('@'), ' or ', ['+49', '30', '1234', '5678'].join(' ')].join(''),
     [['full', 'name'].join('_'), ' = "Private Candidate"'].join(''),
     ['AWS_ACCESS_KEY_ID=', ['AKIA', 'IOSFODNN7EXAMPLE'].join('')].join(''),
     [["pass", "word"].join(''), '=', ['correct', 'horse', 'battery', 'staple'].join('-')].join(''),
+    [['OP', 'CONNECT', 'TOKEN'].join('_'), ['live', 'connect', 'credential', 'value'].join('-')].join('='),
+    [['OP', 'SERVICE', 'ACCOUNT', 'TOKEN'].join('_'), ['live', 'service', 'credential', 'value'].join('-')].join('='),
+    [['CHIRONJP', 'REVIEW', 'PASSWORD', 'HASH'].join('_'), ['live', 'review', 'password', 'digest'].join('-')].join('='),
     ['Source: ', ['https:/', 'github.com', 'acme', 'private-adapter'].join('/')].join(''),
   ].join('\n');
   await writeFile(path.join(root, 'private-notes.txt'), unsafeText);
@@ -63,6 +73,13 @@ test('finds release-blocking classes in a runtime-only unsafe fixture', async (t
   assert.equal(
     result.findings.filter((finding) => finding.code === 'FORBIDDEN_PRODUCT_NAME').length,
     4,
+  );
+  assert.equal(
+    result.findings.filter((finding) => finding.code === 'FORBIDDEN_PRIVATE_SOURCE').length,
+    5,
+  );
+  assert.ok(
+    result.findings.filter((finding) => finding.code === 'SECRET_ASSIGNMENT').length >= 4,
   );
 });
 
