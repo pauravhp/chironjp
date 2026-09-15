@@ -45,9 +45,12 @@ its own `js`, `fill_input`, `click_at_xy`, and CDP callbacks. Attached iframe
 targets must use a real CDP `session_id`; document coordinates or `targetId`
 parameters are never silently treated as top-level viewport coordinates.
 The controller also supplies the exact Chiron-owned Browser Harness executable,
-a daemon name derived from the worker/application/attempt identity, and a
-shared-runtime-directory discriminator. The worker must preserve those values;
-using an unnamed or shared daemon can attach it to the wrong browser.
+a daemon name derived from the worker/application/attempt identity, and a short
+Chiron-owned runtime directory derived from that same identity. The directory
+keeps Browser Harness's `bu.sock` under the Linux Unix-socket path limit while
+isolating each attempt; `BH_RUNTIME_DIR_SHARED` is deliberately absent. The
+worker must preserve those values. Using an unnamed or shared daemon can attach
+it to the wrong browser.
 
 A safe preparation pass is:
 

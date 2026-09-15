@@ -46,6 +46,13 @@ def _browser_daemon_name(worker_id: str, application_id: str, attempt_id: str) -
     return "chironjp_" + hashlib.sha256(identity).hexdigest()[:32]
 
 
+def _browser_runtime_dir(
+    runtime_root: Path, worker_id: str, application_id: str, attempt_id: str,
+) -> Path:
+    identity = f"{worker_id}:{application_id}:{attempt_id}".encode("utf-8")
+    return runtime_root / "bh" / hashlib.sha256(identity).hexdigest()[:16]
+
+
 def prepare_workspace(store: Store, registry: Registry, attempt_id: str) -> Path:
     context = store.attempt_context(attempt_id)
     worker = registry.worker(str(context["worker_id"]))
@@ -62,6 +69,9 @@ def prepare_workspace(store: Store, registry: Registry, attempt_id: str) -> Path
     profile = json.loads(profile_path.read_text(encoding="utf-8"))
     review_file = workspace / "review.json"
     daemon_name = _browser_daemon_name(worker.id, str(context["application_id"]), attempt_id)
+    runtime_dir = _browser_runtime_dir(
+        registry.runtime_root, worker.id, str(context["application_id"]), attempt_id,
+    )
     browser_bin = registry.runtime_root / "browser-venv" / "bin"
     brief = {
         "contract": "chironjp-browser-run-v1",
@@ -79,6 +89,7 @@ def prepare_workspace(store: Store, registry: Registry, attempt_id: str) -> Path
             "browser_harness": str(browser_bin / "browser-harness"),
             "browser_use": str(browser_bin / "browser-use"),
             "daemon_name": daemon_name,
+            "runtime_dir": str(runtime_dir),
         },
         "canonical_profile": profile,
         "package": {
@@ -434,6 +445,10 @@ def run_attempt(
     usage_path = workspace / "usage.json"
     browser_bin = registry.runtime_root / "browser-venv" / "bin"
     daemon_name = _browser_daemon_name(worker.id, str(context["application_id"]), attempt_id)
+    runtime_dir = _browser_runtime_dir(
+        registry.runtime_root, worker.id, str(context["application_id"]), attempt_id,
+    )
+    private_dir(runtime_dir)
     command = [
         hermes_cli(), "-p", worker.hermes_profile,
         "--model", WORKER_MODEL, "--provider", WORKER_PROVIDER,
@@ -451,13 +466,16 @@ def run_attempt(
         "BROWSER_CDP_URL": worker.cdp_url,
         "BU_CDP_URL": worker.cdp_url,
         "BH_AGENT_WORKSPACE": str(workspace),
-        "BH_RUNTIME_DIR": str(registry.runtime_root / "browser-use-runtime" / worker.id),
-        "BH_RUNTIME_DIR_SHARED": "1",
+        "BH_RUNTIME_DIR": str(runtime_dir),
         "BH_TMP_DIR": str(workspace),
         "CHIRON_APPLICATION_ID": str(context["application_id"]),
         "CHIRON_ATTEMPT_ID": attempt_id,
         "PYTHONPATH": f"{REPO_ROOT}:{os.environ.get('PYTHONPATH', '')}",
     }
+    # Browser Harness 0.1.9 uses a constant ``bu.sock`` name when this flag is
+    # absent. Isolation comes from the short per-attempt directory above; a
+    # shared/name-suffixed socket can exceed Linux's AF_UNIX path limit.
+    environment.pop("BH_RUNTIME_DIR_SHARED", None)
     log_path = workspace / "worker.log"
     with log_path.open("ab", buffering=0) as log:
         private_file(log_path)

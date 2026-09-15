@@ -14,6 +14,7 @@ from chironjp.runner import (
     _EMPLOYER_CONSTRAINTS_JS,
     _IDENTITY_JS,
     _browser_daemon_name,
+    _browser_runtime_dir,
     _ensure_application_target,
     _validated_employer_constraints,
     claim_and_run,
@@ -50,6 +51,12 @@ class RunnerIntegrityTests(unittest.TestCase):
         self.assertNotEqual(baseline, _browser_daemon_name("worker-two", "app-one", "att-one"))
         self.assertNotEqual(baseline, _browser_daemon_name("worker-one", "app-two", "att-one"))
         self.assertNotEqual(baseline, _browser_daemon_name("worker-one", "app-one", "att-two"))
+        runtime = _browser_runtime_dir(
+            Path("/srv/chironjp/runtime"), "worker-one", "app-one", "att-one",
+        )
+        self.assertEqual(runtime.parent, Path("/srv/chironjp/runtime/bh"))
+        self.assertRegex(runtime.name, r"^[0-9a-f]{16}$")
+        self.assertLess(len(str(runtime / "bu.sock").encode()), 108)
 
     def setUp(self):
         self.fixture = review_flow_fixtures.ReviewFlowTests(
@@ -316,6 +323,7 @@ class RunnerIntegrityTests(unittest.TestCase):
         with patch("chironjp.runner.start_chromium"), \
              patch("chironjp.runner._ensure_application_target", return_value=target), \
              patch("chironjp.runner.hermes_cli", return_value="/fixture/hermes"), \
+             patch.dict("os.environ", {"BH_RUNTIME_DIR_SHARED": "1"}), \
              patch("chironjp.runner.subprocess.run", side_effect=run_process):
             result = run_attempt(self.store, self.registry, "att-one", timeout_seconds=3)
         self.assertEqual(result["state"], "failed")
@@ -335,7 +343,13 @@ class RunnerIntegrityTests(unittest.TestCase):
         self.assertNotIn("--in", captured["command"])
         self.assertEqual(captured["cwd"], Path(result["workspace"]))
         self.assertRegex(captured["BU_NAME"], r"^chironjp_[0-9a-f]{32}$")
-        self.assertEqual(captured["BH_RUNTIME_DIR_SHARED"], "1")
+        self.assertNotIn("BH_RUNTIME_DIR_SHARED", captured)
+        self.assertEqual(
+            captured["BH_RUNTIME_DIR"],
+            str(_browser_runtime_dir(
+                self.registry.runtime_root, "worker-one", "app-one", "att-one",
+            )),
+        )
         self.assertEqual(
             captured["CHIRONJP_BROWSER_HARNESS"],
             str(self.registry.runtime_root / "browser-venv" / "bin" / "browser-harness"),
