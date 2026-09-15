@@ -1,0 +1,147 @@
+{
+  "identity": {
+    "legal_first_name": "Avery",
+    "legal_middle_name": "",
+    "legal_last_name": "Example",
+    "full_legal_name": "Avery Example",
+    "ats_legal_name_mapping": {
+      "full_name_field": "Avery Example",
+      "with_middle_name_field": {
+        "first_or_given": "Avery",
+        "middle": "",
+        "last_or_family": "Example"
+      },
+      "without_middle_name_field": {
+        "first_or_given": "Avery",
+        "last_or_family": "Example"
+      }
+    },
+    "linkedin_url": "https://linkedin.example.invalid/in/avery-example",
+    "phone": "+1 202-555-0147",
+    "phone_country": "US",
+    "website_url": "https://avery.example.invalid"
+  },
+  "location": {
+    "address_line_1": "100 Example Avenue",
+    "city": "Example City",
+    "country": "United States",
+    "postal_code": "00000",
+    "region": "ZZ",
+    "street_name": "Example Avenue",
+    "street_number": "100",
+    "street_and_postal_code_verified": true,
+    "unit_number": ""
+  },
+  "citizenship_and_residence": {
+    "citizenship": "Fictionland",
+    "nationality": "Fictionland",
+    "passport_country": "Fictionland",
+    "country_of_residence": "United States",
+    "international_student_in_canada": false,
+    "canadian_status": "Not applicable in this fictional example",
+    "owner_source": "fictional fixture",
+    "interpretation": "Fictional values for structural testing only"
+  },
+  "education_status": {
+    "current_level": "Fictional bachelor's degree",
+    "expected_msc_graduation_date": "",
+    "graduating_before_september_2027": true,
+    "work_terms_completed_by_2027_summer": 1,
+    "current_overall_gpa_by_scale": {
+      "4.0": 3.5,
+      "9.0": null
+    },
+    "gpa_source": "fictional fixture"
+  },
+  "education": [
+    {
+      "id": "example-institute",
+      "current": false,
+      "degree": "BSc",
+      "completed_end": "2025-05",
+      "expected_end": "",
+      "field": "Systems Design",
+      "gpa": "3.5/4.0 (fictional)",
+      "location": "Harbor Town, XY",
+      "school": "Example Institute of Technology (fictional)",
+      "source_completeness": "fictional fixture",
+      "source_path": "examples/fictional/canonical-profile-overrides.json",
+      "start": "2021-09"
+    }
+  ],
+  "professional_experience_employers": ["Northstar Clockwork LLC (fictional)"],
+  "work_authorization": {
+    "Canada": {
+      "legally_authorized": false,
+      "basis": "Fictional answer",
+      "future_employer_sponsorship_required": true
+    },
+    "United States": {
+      "legally_authorized": true,
+      "future_employer_sponsorship_required": false
+    }
+  },
+  "application_preferences": {
+    "location": "Remote in the fictional Example region",
+    "compensation": "Owner decides per application",
+    "employer_specific_history": "No fictional prior employment unless explicitly listed",
+    "looking_for_summer_internship": false
+  },
+  "employment_declarations": {
+    "restrictive_contract_prevents_accepting_role": false,
+    "financial_licenses": "None in this fictional fixture",
+    "relatives_employed_by_prospective_employer": false
+  },
+  "learning_and_inspiration": {
+    "source_question": "What did you recently learn?",
+    "owner_approval_date": "2026-09-15",
+    "provenance": "fictional fixture",
+    "owner_narrative_principle": "Use only the listed fictional facts",
+    "narrative": "Avery learned how recovery ledgers make fictional demonstrations easier to inspect.",
+    "supporting_facts": ["Built a fictional setup ledger", "Tested a fictional recovery path"],
+    "adaptation_guidance": "Do not add facts"
+  },
+  "demographics": {
+    "disability_status": "Decline to answer",
+    "gender": "Decline to answer",
+    "gender_identity": "Decline to answer",
+    "gender_disclosure_preference": "Decline to answer",
+    "hispanic_or_latino": null,
+    "hispanic_or_latino_disclosure_preference": "Decline to answer",
+    "ethnicity": "Decline to answer",
+    "disclosure_preference": "Decline to answer",
+    "sexual_orientation": "Decline to answer",
+    "veteran_status": "Decline to answer"
+  },
+  "canonical_answers": {
+    "GLOBAL.legal_name_full": "Avery Example",
+    "GLOBAL.expected_msc_graduation_date": "Not applicable",
+    "GLOBAL.gender": "Decline to answer",
+    "GLOBAL.sexual_orientation": "Decline to answer",
+    "GLOBAL.graduating_before_september_2027": "Yes",
+    "GLOBAL.linkedin_url": "https://linkedin.example.invalid/in/avery-example",
+    "GLOBAL.summer_internship_interest": "No",
+    "GLOBAL.co_op_requirement": "No",
+    "GLOBAL.website_url": "https://avery.example.invalid",
+    "GLOBAL.citizenship": "Fictionland",
+    "GLOBAL.nationality": "Fictionland",
+    "GLOBAL.passport_country": "Fictionland",
+    "GLOBAL.country_of_residence": "United States",
+    "GLOBAL.international_student_in_canada": "No",
+    "GLOBAL.canadian_immigration_status": "Not applicable",
+    "CA.work_authorized_current": "No",
+    "CA.sponsorship_future": "Yes",
+    "US.disability_status": "Decline to answer",
+    "US.hispanic_latino": "Decline to answer",
+    "US.sponsorship_future": "No",
+    "US.veteran_status": "Decline to answer",
+    "US.work_right_verification": "Owner completes employer attestation",
+    "US.work_authorized_current": "Yes",
+    "CA.non_compete": "No",
+    "GLOBAL.financial_licenses": "None in this fictional fixture",
+    "GLOBAL.relatives_employed_by_prospective_employer": "No",
+    "GLOBAL.current_overall_gpa_4_point": "3.5",
+    "GLOBAL.current_overall_gpa_9_point": "Not applicable",
+    "GLOBAL.learning_inspiration_recent_discovery": "A fictional recovery-ledger lesson"
+  }
+}

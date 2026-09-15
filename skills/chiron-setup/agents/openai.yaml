@@ -1,0 +1,4 @@
+interface:
+  display_name: "Chiron Setup"
+  short_description: "Safely set up or recover a Chiron workspace"
+  default_prompt: "Use $chiron-setup to inspect and continue my Chiron setup without clobbering existing Hermes state."

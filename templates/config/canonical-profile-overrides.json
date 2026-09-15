@@ -1,0 +1,147 @@
+{
+  "identity": {
+    "legal_first_name": "",
+    "legal_middle_name": "",
+    "legal_last_name": "",
+    "full_legal_name": "",
+    "ats_legal_name_mapping": {
+      "full_name_field": "",
+      "with_middle_name_field": {
+        "first_or_given": "",
+        "middle": "",
+        "last_or_family": ""
+      },
+      "without_middle_name_field": {
+        "first_or_given": "",
+        "last_or_family": ""
+      }
+    },
+    "linkedin_url": "",
+    "phone": "",
+    "phone_country": "",
+    "website_url": ""
+  },
+  "location": {
+    "address_line_1": "",
+    "city": "",
+    "country": "",
+    "postal_code": "",
+    "region": "",
+    "street_name": "",
+    "street_number": "",
+    "street_and_postal_code_verified": false,
+    "unit_number": ""
+  },
+  "citizenship_and_residence": {
+    "citizenship": "",
+    "nationality": "",
+    "passport_country": "",
+    "country_of_residence": "",
+    "international_student_in_canada": null,
+    "canadian_status": "",
+    "owner_source": "",
+    "interpretation": ""
+  },
+  "education_status": {
+    "current_level": "",
+    "expected_msc_graduation_date": "",
+    "graduating_before_september_2027": null,
+    "work_terms_completed_by_2027_summer": null,
+    "current_overall_gpa_by_scale": {
+      "4.0": null,
+      "9.0": null
+    },
+    "gpa_source": ""
+  },
+  "education": [
+    {
+      "id": "",
+      "current": false,
+      "degree": "",
+      "completed_end": "",
+      "expected_end": "",
+      "field": "",
+      "gpa": "",
+      "location": "",
+      "school": "",
+      "source_completeness": "",
+      "source_path": "",
+      "start": ""
+    }
+  ],
+  "professional_experience_employers": [],
+  "work_authorization": {
+    "Canada": {
+      "legally_authorized": null,
+      "basis": "",
+      "future_employer_sponsorship_required": null
+    },
+    "United States": {
+      "legally_authorized": null,
+      "future_employer_sponsorship_required": null
+    }
+  },
+  "application_preferences": {
+    "location": "",
+    "compensation": "",
+    "employer_specific_history": "",
+    "looking_for_summer_internship": null
+  },
+  "employment_declarations": {
+    "restrictive_contract_prevents_accepting_role": null,
+    "financial_licenses": "",
+    "relatives_employed_by_prospective_employer": null
+  },
+  "learning_and_inspiration": {
+    "source_question": "We’re curious about how you stay inspired and learn - tell us about something interesting you’ve discovered or learned recently. Feel free to share in just a few sentences.",
+    "owner_approval_date": "",
+    "provenance": "",
+    "owner_narrative_principle": "",
+    "narrative": "",
+    "supporting_facts": [],
+    "adaptation_guidance": ""
+  },
+  "demographics": {
+    "disability_status": "",
+    "gender": "",
+    "gender_identity": "",
+    "gender_disclosure_preference": "",
+    "hispanic_or_latino": null,
+    "hispanic_or_latino_disclosure_preference": "",
+    "ethnicity": "",
+    "disclosure_preference": "",
+    "sexual_orientation": "",
+    "veteran_status": ""
+  },
+  "canonical_answers": {
+    "GLOBAL.legal_name_full": "",
+    "GLOBAL.expected_msc_graduation_date": "",
+    "GLOBAL.gender": "",
+    "GLOBAL.sexual_orientation": "",
+    "GLOBAL.graduating_before_september_2027": "",
+    "GLOBAL.linkedin_url": "",
+    "GLOBAL.summer_internship_interest": "",
+    "GLOBAL.co_op_requirement": "",
+    "GLOBAL.website_url": "",
+    "GLOBAL.citizenship": "",
+    "GLOBAL.nationality": "",
+    "GLOBAL.passport_country": "",
+    "GLOBAL.country_of_residence": "",
+    "GLOBAL.international_student_in_canada": "",
+    "GLOBAL.canadian_immigration_status": "",
+    "CA.work_authorized_current": "",
+    "CA.sponsorship_future": "",
+    "US.disability_status": "",
+    "US.hispanic_latino": "",
+    "US.sponsorship_future": "",
+    "US.veteran_status": "",
+    "US.work_right_verification": "",
+    "US.work_authorized_current": "",
+    "CA.non_compete": "",
+    "GLOBAL.financial_licenses": "",
+    "GLOBAL.relatives_employed_by_prospective_employer": "",
+    "GLOBAL.current_overall_gpa_4_point": "",
+    "GLOBAL.current_overall_gpa_9_point": "",
+    "GLOBAL.learning_inspiration_recent_discovery": ""
+  }
+}

@@ -1,0 +1,174 @@
+{
+  "schema_version": 1,
+  "canonical_summary": {
+    "body": "who builds dependable web services and accessible interfaces, with an emphasis on observable systems, careful testing, and clear collaboration.",
+    "default_label": "Software engineer",
+    "labels": {
+      "software": "Software engineer",
+      "platform": "Platform engineer",
+      "full_stack": "Full-stack engineer"
+    }
+  },
+  "experience": [
+    {
+      "id": "northwind_labs",
+      "employer": "Northwind Labs (fictional)",
+      "dates": "Jun 2023 -- Aug 2024",
+      "title": "Software Developer",
+      "location": "Example City",
+      "minimum_bullets": 2,
+      "preferred_bullets": 3,
+      "bullets": [
+        {
+          "id": "service_contracts",
+          "text": "Defined typed service contracts and regression tests for an inventory workflow used by three internal teams.",
+          "tags": ["TypeScript", "testing", "services"]
+        },
+        {
+          "id": "query_observability",
+          "text": "Added query tracing and actionable dashboards that made recurring PostgreSQL bottlenecks reproducible.",
+          "tags": ["PostgreSQL", "observability", "performance"]
+        },
+        {
+          "id": "accessible_components",
+          "text": "Built reusable React components with keyboard navigation and documented accessibility checks.",
+          "tags": ["React", "accessibility", "frontend"]
+        }
+      ]
+    },
+    {
+      "id": "maple_studio",
+      "employer": "Maple Studio (fictional)",
+      "dates": "Jan 2022 -- May 2023",
+      "title": "Developer Intern",
+      "location": "Remote",
+      "minimum_bullets": 1,
+      "preferred_bullets": 2,
+      "bullets": [
+        {
+          "id": "api_checks",
+          "text": "Implemented Python API checks and CI gates for a small scheduling product.",
+          "tags": ["Python", "FastAPI", "CI/CD"]
+        },
+        {
+          "id": "runbook",
+          "text": "Wrote a deployment runbook and paired with maintainers to simplify Docker-based local setup.",
+          "tags": ["Docker", "documentation", "collaboration"]
+        }
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "id": "queue_garden",
+      "name": "Queue Garden (fictional)",
+      "date": "2024",
+      "tags": ["Python", "PostgreSQL", "observability"],
+      "technologies": ["Python", "PostgreSQL", "OpenTelemetry"],
+      "default_variant": "broad",
+      "variants": [
+        {
+          "id": "broad",
+          "bullets": [
+            "Built a local job-queue laboratory that visualizes retries, leases, and dead-letter handling."
+          ]
+        },
+        {
+          "id": "detailed",
+          "bullets": [
+            "Built a local job-queue laboratory that visualizes retries, leases, and dead-letter handling.",
+            "Added deterministic failure scenarios and trace correlation for repeatable debugging workshops."
+          ]
+        }
+      ],
+      "claim_limits": "Fictional demonstration; no production usage claim.",
+      "provenance": "examples/fictional/resume-bank.actual.json"
+    },
+    {
+      "id": "status_lantern",
+      "name": "Status Lantern (fictional)",
+      "date": "2023",
+      "tags": ["React", "TypeScript", "accessibility"],
+      "technologies": ["React", "TypeScript"],
+      "text": "Created an accessible status-board prototype with keyboard-first filtering and offline fixtures."
+    },
+    {
+      "id": "catalog_compass",
+      "name": "Catalog Compass (fictional)",
+      "date": "2022",
+      "tags": ["FastAPI", "Docker", "testing"],
+      "technologies": ["FastAPI", "Docker", "Pytest"],
+      "text": "Prototyped a catalog validation API with containerized integration tests."
+    }
+  ],
+  "leadership": {
+    "id": "community_maintainer",
+    "employer": "Example Code Club (fictional)",
+    "dates": "2022 -- 2024",
+    "title": "Volunteer Maintainer",
+    "location": "Example City",
+    "minimum_bullets": 1,
+    "preferred_bullets": 1,
+    "bullets": [
+      {
+        "id": "review_sessions",
+        "text": "Facilitated monthly review sessions on testing, documentation, and constructive code feedback.",
+        "tags": ["mentoring", "testing", "documentation"]
+      },
+      {
+        "id": "starter_issues",
+        "text": "Curated starter issues and contribution notes for new volunteer maintainers.",
+        "tags": ["open source", "collaboration"]
+      }
+    ]
+  },
+  "awards": [
+    {
+      "id": "community_build_recognition",
+      "title": "Community Build Recognition (fictional)",
+      "text": "Recognized at the fictional Northstar Community Demo for the Queue Garden teaching prototype.",
+      "required": true,
+      "count_status": "fictional_fixture",
+      "facts": [
+        {
+          "event": "Northstar Community Demo (fictional)",
+          "placement": null,
+          "project": "Queue Garden (fictional)"
+        }
+      ]
+    }
+  ],
+  "canonical_skills": {
+    "Languages": ["Python", "TypeScript", "SQL"],
+    "Frameworks & Libraries": ["React", "FastAPI", "Pytest"],
+    "Data & Reliability": ["PostgreSQL", "OpenTelemetry", "REST APIs"],
+    "Tools & Platforms": ["Docker", "Git", "CI/CD"]
+  },
+  "skill_sources": {
+    "fictional-owner-interview:2026-01": {
+      "source": "fictional owner interview",
+      "depth": "working proficiency",
+      "statement": "The fictional candidate confirms hands-on use of every skill in this fixture."
+    }
+  },
+  "skill_evidence": {
+    "Python": {"level": "working", "sources": ["fictional-owner-interview:2026-01"]},
+    "TypeScript": {"level": "working", "sources": ["fictional-owner-interview:2026-01"]},
+    "SQL": {"level": "working", "sources": ["fictional-owner-interview:2026-01"]},
+    "React": {"level": "working", "sources": ["fictional-owner-interview:2026-01"], "aliases": ["React.js"]},
+    "FastAPI": {"level": "working", "sources": ["fictional-owner-interview:2026-01"]},
+    "Pytest": {"level": "working", "sources": ["fictional-owner-interview:2026-01"]},
+    "PostgreSQL": {"level": "working", "sources": ["fictional-owner-interview:2026-01"], "aliases": ["Postgres"]},
+    "OpenTelemetry": {"level": "familiar", "sources": ["fictional-owner-interview:2026-01"]},
+    "REST APIs": {"level": "working", "sources": ["fictional-owner-interview:2026-01"], "aliases": ["REST"]},
+    "Docker": {"level": "working", "sources": ["fictional-owner-interview:2026-01"]},
+    "Git": {"level": "working", "sources": ["fictional-owner-interview:2026-01"]},
+    "CI/CD": {"level": "working", "sources": ["fictional-owner-interview:2026-01"]}
+  },
+  "skill_exclusions": {
+    "Unverified Vendor Tool": {
+      "aliases": ["UVT"],
+      "sources": ["fictional-owner-interview:2026-01"]
+    }
+  }
+}

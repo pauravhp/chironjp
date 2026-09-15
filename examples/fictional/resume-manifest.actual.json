@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "summary_label": "Software engineer",
+  "experience_order": ["northwind_labs", "maple_studio"],
+  "experience_bullets": {
+    "northwind_labs": ["service_contracts", "query_observability"],
+    "maple_studio": ["api_checks"]
+  },
+  "projects": ["queue_garden", "status_lantern"],
+  "project_variants": {
+    "queue_garden": "broad"
+  },
+  "leadership_bullets": ["review_sessions"],
+  "awards": ["community_build_recognition"],
+  "skills": {
+    "Languages": ["Python", "TypeScript", "SQL"],
+    "Web": ["React", "FastAPI", "REST APIs"],
+    "Data & Reliability": ["PostgreSQL", "OpenTelemetry", "Pytest"],
+    "Delivery": ["Docker", "Git", "CI/CD"]
+  },
+  "jd_coverage": [
+    {
+      "term": "Python",
+      "jd_quote": "Python",
+      "skill": "Python",
+      "reason": "The exact technology is present in the canonical evidence inventory."
+    },
+    {
+      "term": "PostgreSQL",
+      "jd_quote": "PostgreSQL",
+      "skill": "PostgreSQL",
+      "reason": "The exact technology is present in the canonical evidence inventory."
+    }
+  ]
+}

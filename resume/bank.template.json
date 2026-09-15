@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "canonical_summary": {
+    "body": "",
+    "default_label": "",
+    "labels": {}
+  },
+  "experience": [],
+  "projects": [],
+  "leadership": {
+    "id": "",
+    "employer": "",
+    "dates": "",
+    "title": "",
+    "location": "",
+    "minimum_bullets": 1,
+    "preferred_bullets": 1,
+    "bullets": []
+  },
+  "awards": [],
+  "canonical_skills": {},
+  "skill_sources": {
+    "owner-interview:replace-me": {
+      "source": "owner interview",
+      "depth": "replace with the owner's exact proficiency statement",
+      "statement": ""
+    }
+  },
+  "skill_evidence": {},
+  "skill_exclusions": {}
+}

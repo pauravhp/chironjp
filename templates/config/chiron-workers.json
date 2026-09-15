@@ -1,0 +1,39 @@
+{
+  "schema_version": 3,
+  "runtime_root": "",
+  "state_root": "",
+  "database": "",
+  "hermes_profile_root": "",
+  "tailor": {
+    "id": "tailor",
+    "hermes_profile": "",
+    "workspace": "",
+    "provider": "",
+    "model": "",
+    "reasoning": ""
+  },
+  "workers": [
+    {
+      "id": "worker-a",
+      "enabled": false,
+      "hermes_profile": "",
+      "chromium_profile": "",
+      "workspace": "",
+      "cdp_port": null,
+      "display": null,
+      "vnc_port": null,
+      "novnc_port": null
+    },
+    {
+      "id": "worker-b",
+      "enabled": false,
+      "hermes_profile": "",
+      "chromium_profile": "",
+      "workspace": "",
+      "cdp_port": null,
+      "display": null,
+      "vnc_port": null,
+      "novnc_port": null
+    }
+  ]
+}

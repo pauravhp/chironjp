@@ -1,0 +1,46 @@
+name: Release audit
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependencies
+        run: |
+          npm ci
+          python -m pip install --disable-pip-version-check -e '.[test,review]'
+
+      - name: Test extracted Python core
+        run: python -m pytest -q -rs tests_python
+
+      - name: Test public Node paths
+        run: npm test
+
+      - name: Test public onboarding
+        run: python -m unittest discover -s test/onboarding -v
+
+      - name: Audit public tree
+        run: node scripts/release-audit.mjs .

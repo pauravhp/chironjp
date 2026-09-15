@@ -1,0 +1,25 @@
+{
+  "name": "chironjp",
+  "version": "0.1.0",
+  "description": "A review-first, provider-backed job sourcing ingress",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "chironjp-sourcing": "./bin/chironjp-sourcing.mjs"
+  },
+  "exports": {
+    "./sourcing": "./src/sourcing/index.mjs"
+  },
+  "scripts": {
+    "scan": "node ./bin/chironjp-sourcing.mjs",
+    "test": "node --test ./test/**/*.test.mjs",
+    "test:sourcing": "node --test ./test/sourcing/*.test.mjs",
+    "test:audit": "node --test ./test/release-audit/*.test.mjs",
+    "test:onboarding": "python3 -m unittest discover -s test/onboarding -v",
+    "audit:release": "node ./scripts/release-audit.mjs ."
+  },
+  "license": "MIT"
+}

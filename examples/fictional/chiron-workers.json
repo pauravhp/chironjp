@@ -1,0 +1,39 @@
+{
+  "schema_version": 3,
+  "runtime_root": "/srv/chiron-example/runtime",
+  "state_root": "/srv/chiron-example/state",
+  "database": "/srv/chiron-example/runtime/chiron.sqlite3",
+  "hermes_profile_root": "/srv/chiron-example/runtime/hermes/profiles",
+  "tailor": {
+    "id": "tailor",
+    "hermes_profile": "chiron-example-tailor",
+    "workspace": "/srv/chiron-example/state/tailor",
+    "provider": "openai-codex",
+    "model": "gpt-5.6-terra",
+    "reasoning": "high"
+  },
+  "workers": [
+    {
+      "id": "worker-a",
+      "enabled": true,
+      "hermes_profile": "chiron-example-a",
+      "chromium_profile": "/srv/chiron-example/runtime/chromium/a",
+      "workspace": "/srv/chiron-example/state/workers/a",
+      "cdp_port": 19421,
+      "display": 61,
+      "vnc_port": 19521,
+      "novnc_port": 19621
+    },
+    {
+      "id": "worker-b",
+      "enabled": false,
+      "hermes_profile": "chiron-example-b",
+      "chromium_profile": "/srv/chiron-example/runtime/chromium/b",
+      "workspace": "/srv/chiron-example/state/workers/b",
+      "cdp_port": 19422,
+      "display": 62,
+      "vnc_port": 19522,
+      "novnc_port": 19622
+    }
+  ]
+}
