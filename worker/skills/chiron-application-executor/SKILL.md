@@ -23,6 +23,9 @@ Use the controller-installed `browser-harness==0.1.9` runtime. Import
 the compact inventory is unavailable; it does not disable the universal guard
 or ordinary Browser Harness inspection.
 
+Use the bundled [browser helper quick reference](references/browser-contract.md)
+for the exact workspace-local helper signatures.
+
 Invoke the exact executable supplied in `CHIRONJP_BROWSER_HARNESS`; do not pick
 a repository or shared virtual environment. Preserve the controller-supplied
 `BU_NAME`, `BU_CDP_URL`, and Browser Harness runtime-directory environment on
