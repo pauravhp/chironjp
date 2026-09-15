@@ -19,11 +19,12 @@ application is human-only regardless of what the site calls it.
 
 As of 2026-09-15 06:18 UTC, an audited aggregate snapshot contained 23
 canonical recorded submissions from non-public, multi-version operation across
-10 ATS families. Fifteen had associated rendered-resume records, including
-records affected by historical rendering bugs; the other eight were
-owner-reported submission records. The Xsolla accepted offer described in the
-README belongs to an earlier non-public version and is separate from this
-aggregate.
+10 ATS families. Fifteen were backed by rendered employer-confirmation
+evidence: 11 historical final-action confirmations, two human-desktop
+confirmations, and two historical guard-violation submissions. The other eight
+were owner-reported submission records. These records span earlier versions and
+submission behaviors. The Xsolla accepted offer described in the README belongs
+to an earlier non-public version and is separate from this aggregate.
 
 This is a count of canonical operational records, not raw application evidence.
 No raw IDs or personal details are published here. It provides no conversion
