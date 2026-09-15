@@ -31,7 +31,9 @@ a repository or shared virtual environment. Preserve the controller-supplied
 `BU_CDP_URL` and Browser Harness runtime-directory environment on every call so
 the attempt cannot attach to another daemon or browser; do not add or override
 `BU_NAME`. The controller has already bound that daemon to the brief's exact target and
-proved `Runtime.evaluate`. Do not reset a healthy transport, create a replacement
+proved `Runtime.evaluate`. When `current_tab()` reports the brief's target, do
+not call `switch_tab`; the Chiron overlay returns the existing session for that
+same target and rejects every other target. Do not reset a healthy transport, create a replacement
 tab, or substitute another target. On demonstrated transport failure, recover
 only this worker's isolated daemon, then rebind and verify the same target
 before continuing.

@@ -2,11 +2,40 @@ from __future__ import annotations
 
 import base64
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
 
 from chironjp import browser_tools as toolbox
+
+
+def test_switch_tab_reuses_exact_controller_session_without_reattaching():
+    calls = []
+    harness = SimpleNamespace(
+        current_tab=lambda: {"targetId": "target-one"},
+        activate_tab=lambda target: calls.append(("activate", target)),
+        _send=lambda request: calls.append(("send", request)) or {"session_id": "session-one"},
+    )
+    with patch.object(toolbox, "_harness_helpers", harness):
+        assert toolbox.switch_tab("target-one") == "session-one"
+        assert toolbox.switch_tab({"target_id": "target-one"}, activate=True) == "session-one"
+    assert calls == [
+        ("send", {"meta": "session"}),
+        ("activate", "target-one"),
+        ("send", {"meta": "session"}),
+    ]
+
+
+def test_switch_tab_rejects_every_non_designated_target():
+    harness = SimpleNamespace(
+        current_tab=lambda: {"targetId": "target-one"},
+        activate_tab=lambda _target: pytest.fail("must not activate another target"),
+        _send=lambda _request: pytest.fail("must not read a session for another target"),
+    )
+    with patch.object(toolbox, "_harness_helpers", harness):
+        with pytest.raises(RuntimeError, match="controller-bound"):
+            toolbox.switch_tab("target-two")
 
 
 def test_cdp_routes_frame_session_and_installs_guard_before_activation():

@@ -13,6 +13,7 @@ from chironjp import browser_tools
 from chironjp.runner import (
     _EMPLOYER_CONSTRAINTS_JS,
     _IDENTITY_JS,
+    RUN_PROMPT,
     _browser_environment,
     _browser_runtime_dir,
     _ensure_application_target,
@@ -92,6 +93,7 @@ class RunnerIntegrityTests(unittest.TestCase):
         self.assertIn("switch_tab(expected)", script)
         self.assertIn("value = js('1+1')", script)
         self.assertIn("current.get('targetId') != expected", script)
+        self.assertIn("do not call switch_tab when current_tab", RUN_PROMPT)
         self.assertEqual(
             (workspace / "browser-preflight.log").read_text(encoding="utf-8"),
             marker + "\n",

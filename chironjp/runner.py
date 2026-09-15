@@ -31,8 +31,8 @@ $BH_AGENT_WORKSPACE/run-brief.json. Use chiron-application-executor and the
 copied agent_helpers.py. Prepare the exact retained target to guarded Review;
 invoke the browser runtime only through $CHIRONJP_BROWSER_HARNESS and preserve
 the supplied isolated Browser Harness environment. Start with the exact target
-bound by controller preflight;
-do not reset healthy transport or create or substitute another tab. On a
+bound by controller preflight; do not call switch_tab when current_tab already
+reports that target, reset healthy transport, or create or substitute another tab. On a
 demonstrated transport failure, recover only this isolated daemon, then rebind
 and verify the same target. Never activate a final action. Write review.json with only the documented
 fields, then execute finish_argv as an argv array without a shell. Exit while

@@ -36,7 +36,39 @@ try:
     _ORIGINAL_CDP = getattr(_harness_helpers, "_chiron_original_cdp", _harness_helpers.cdp)
     _harness_helpers._chiron_original_cdp = _ORIGINAL_CDP
 except ImportError:
+    _harness_helpers = None
     _ORIGINAL_CDP = None
+
+
+def switch_tab(target, activate=False):
+    """Return the existing controller-bound session without reattaching.
+
+    A Chiron browser worker owns exactly one designated application target.
+    Browser Harness' general-purpose ``switch_tab`` always creates a new CDP
+    session, even when asked for the already-current target.  Repeated stateless
+    calls can therefore replace a healthy session and strand the retained page.
+    The agent-helper overlay narrows that API to this worker's actual contract:
+    the current target is idempotent and every other target is out of scope.
+    """
+    if _harness_helpers is None:
+        raise RuntimeError("Browser Harness is unavailable")
+    requested = (
+        target.get("targetId") or target.get("target_id")
+        if isinstance(target, Mapping) else target
+    )
+    requested = str(requested or "")
+    current = _harness_helpers.current_tab()
+    current_id = str(current.get("targetId") or current.get("target_id") or "")
+    if not requested or requested != current_id:
+        raise RuntimeError(
+            "Chiron cannot switch away from the controller-bound application target"
+        )
+    if activate:
+        _harness_helpers.activate_tab(current_id)
+    session_id = _harness_helpers._send({"meta": "session"}).get("session_id")
+    if not session_id:
+        raise RuntimeError("controller-bound application target has no live CDP session")
+    return session_id
 
 
 def cdp(method, session_id=None, **params):
