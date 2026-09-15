@@ -221,9 +221,10 @@ class ReviewHandler(BaseHTTPRequestHandler):
 <p id="status" role="status">Connected view-only. Take control to pause the worker.</p>
 <div class="controls"><button id="take" disabled>Take control</button><button id="release" disabled>Return control</button><button id="page-down" disabled>Page down</button></div>
 <div id="screen" class="standby" aria-label="Live retained application desktop"></div>
-<label class="phone-input" for="keyboard">Phone keyboard
+<div class="phone-input"><label for="keyboard">Phone composer</label>
 <input id="keyboard" type="text" inputmode="text" enterkeyhint="done" autocomplete="off" autocapitalize="none" spellcheck="false" disabled aria-describedby="keyboard-help">
-<span id="keyboard-help" class="muted">After focusing a field in the remote form, tap here to type from a phone. Available only while you control the retained desktop.</span></label>
+<button id="insert" type="button" disabled>Insert text</button>
+<span id="keyboard-help" class="muted">After focusing a field in the remote form, type or paste here, review the visible text, then choose Insert text. Available only while you control the retained desktop.</span></div>
 <script type="module" src="/desktop.js"></script>"""
             self._send(200, _page("Live desktop · ChironJP", body))
         except (ValueError, RuntimeError, OSError) as exc:

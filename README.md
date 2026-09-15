@@ -23,6 +23,8 @@ An earlier version of this project helped me apply to Xsolla. That application l
 
 That is an owner-reported historical outcome from an earlier implementation, not a hiring guarantee or a result produced by this public build.
 
+Separately, a [2026-09-15 historical aggregate](docs/proof.md#historical-operational-aggregate) records 23 canonical submissions across 10 ATS families in non-public, multi-version operation; it is not a public-build benchmark or conversion claim.
+
 ## Public preview
 
 The repository now includes the Python/SQLite package and Review core, the

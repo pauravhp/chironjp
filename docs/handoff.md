@@ -54,11 +54,16 @@ discarding the active human-session marker. The JSON response and browser UI
 report an uncertain state and retain a Return-control retry instead of claiming
 that the guard was restored.
 
-The desktop remains visible in view-only mode. Its local phone-keyboard input
-forwards committed Unicode text, Backspace, and Enter through noVNC only while
-an authenticated human session is in the verified `controlling` state. The
-input is disabled while disconnected, view-only, or uncertain. The owner still
-focuses the intended field in the retained employer interface before typing.
+The desktop remains visible in view-only mode. Its local phone composer keeps
+typed or pasted text visible locally for review; input events are not forwarded
+as they arrive. The explicit **Insert text** control sends that full value once
+through noVNC, and both composer and Insert are disabled unless an authenticated
+human session is in the verified `controlling` state. This also handles browser
+paste events whose `InputEvent.data` is null because transmission reads the
+composer's current value only when the owner chooses Insert. After a successful
+Insert, that action remains disabled until the local value is edited, preventing
+an accidental repeat from duplicating the same text. The owner still focuses the
+intended field in the retained employer interface first.
 
 ## Provenance
 
@@ -116,6 +121,28 @@ It starts disposable Xvfb, x11vnc, Chromium, and the public Review server. It
 proves an anonymous WebSocket denial, authenticated same-origin binary RFB,
 Take-control input into an innocuous fictional field, Return-control guard
 restoration, and rejection of further VNC input. It never activates the fixture
-final control. This test passed on the extraction host. It does not prove a
-phone-sized browser, external TLS/access policy, or an employer application;
-those remain deployment proof items.
+final control. This raw protocol test passed on the extraction host. It is
+transport integration evidence, not evidence that the shipped noVNC page was
+used.
+
+A separate opt-in acceptance loads the rendered Review page and shipped
+`desktop.js`/noVNC modules in a fresh 390-by-844 Chromium viewport through a
+temporary local HTTPS edge:
+
+```bash
+CHIRONJP_PHONE_NOVNC_INTEGRATION=1 .venv/bin/python \
+  -m unittest -v \
+  tests_python.test_review_flow.ReviewFlowTests.test_phone_https_page_novnc_keyboard_scroll_return_and_reconnect
+```
+
+The fictional acceptance signs in through the visible form, verifies the
+Secure/HttpOnly session cookie, observes view-only mode, takes control, focuses
+and scrolls the retained page through noVNC, enters text through the visible
+phone composer, verifies the remote field remains untouched until the explicit
+Insert action, returns control, reloads/reconnects, and verifies both the retained
+field value and restored final-action guard. It asserts that the
+fixture final control was never activated. It writes two fictional screenshots
+under the ignored `runtime/proof/` directory for private inspection. This
+acceptance passed on the extraction host. Its self-signed loopback TLS is test
+plumbing: an externally reachable authenticated TLS/access edge and a real
+employer application remain unproven deployment items.

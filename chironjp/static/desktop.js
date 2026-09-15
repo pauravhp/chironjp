@@ -6,6 +6,7 @@ const take = document.querySelector('#take');
 const release = document.querySelector('#release');
 const pageDown = document.querySelector('#page-down');
 const keyboard = document.querySelector('#keyboard');
+const insert = document.querySelector('#insert');
 const key = `chironjpDesktop:${location.pathname}`;
 let session = sessionStorage.getItem(key);
 if (!session) {
@@ -15,6 +16,8 @@ if (!session) {
 let rfb;
 let connected = false;
 let controlState = 'view_only';
+let composerRevision = 0;
+let insertedRevision = -1;
 
 function show(message) { status.textContent = message; }
 function controls() {
@@ -24,6 +27,7 @@ function controls() {
   release.disabled = !connected || (!controlling && !uncertain);
   pageDown.disabled = !connected || !controlling;
   keyboard.disabled = !connected || !controlling;
+  insert.disabled = !connected || !controlling || keyboard.value.length === 0 || insertedRevision === composerRevision;
   screen.classList.toggle('standby', !controlling);
   if (rfb) rfb.viewOnly = !controlling;
 }
@@ -66,22 +70,17 @@ function sendKeys(text) {
   }
 }
 
-keyboard.addEventListener('beforeinput', event => {
-  if (controlState !== 'controlling') {
-    event.preventDefault();
-    return;
-  }
-  if (event.inputType === 'deleteContentBackward') {
-    event.preventDefault();
-    rfb.sendKey(0xff08);
-  } else if (event.inputType === 'insertLineBreak') {
-    event.preventDefault();
-    rfb.sendKey(0xff0d);
-  }
+// Editing and paste stay local, including input events whose `data` is null.
+// The owner explicitly sends the reviewed full value once with Insert text.
+keyboard.addEventListener('input', () => {
+  composerRevision += 1;
+  controls();
 });
-keyboard.addEventListener('input', event => {
-  if (event.data) sendKeys(event.data);
-  keyboard.value = '';
+insert.addEventListener('click', () => {
+  if (insert.disabled) return;
+  sendKeys(keyboard.value);
+  insertedRevision = composerRevision;
+  controls();
 });
 
 rfb = new RFB(screen, `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}${location.pathname}socket?session=${encodeURIComponent(session)}`);

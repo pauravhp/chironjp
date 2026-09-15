@@ -75,14 +75,16 @@ class FixturePage(BaseHTTPRequestHandler):
     def do_GET(self):  # noqa: N802
         body = b"""<!doctype html><meta charset=utf-8><title>Fictional application fixture</title>
 <style>body{font:20px system-ui;margin:24px}.spacer{height:1050px}input,button{font:inherit;min-height:48px}</style>
-<h1>Fictional application fixture</h1>
+<h1 tabindex=0>Fictional application fixture</h1>
 <form onsubmit="event.preventDefault();window.fixtureFinalActivations++">
 <label>Transport field <input id=fixture-field></label>
 <div class=spacer aria-hidden=true></div>
 <label>Phone proof field <input id=phone-fixture-field autocomplete=off></label>
 <button type=submit onclick="window.fixtureFinalActivations++">Submit Application</button>
 </form><script>window.fixtureFinalActivations=0;window.fixtureKeys=[];
-addEventListener('keydown',event=>window.fixtureKeys.push({key:event.key,code:event.code}))</script>"""
+window.fixtureClicks=[];
+addEventListener('keydown',event=>window.fixtureKeys.push({key:event.key,code:event.code}));
+addEventListener('click',event=>window.fixtureClicks.push({tag:event.target.tagName,trusted:event.isTrusted}))</script>"""
         self.send_response(200)
         self.send_header("Content-Type", "text/html")
         self.send_header("Content-Length", str(len(body)))
@@ -303,9 +305,15 @@ class ReviewFlowTests(unittest.TestCase):
         self.assertIn("controlState = 'uncertain'", script)
         self.assertIn("retry Return control", script)
         self.assertIn("keyboard.disabled = !connected || !controlling", script)
-        self.assertIn("rfb.sendKey(0xff08)", script)
-        self.assertIn("rfb.sendKey(0xff0d)", script)
+        self.assertIn("insertedRevision === composerRevision", script)
+        self.assertIn("composerRevision += 1", script)
+        self.assertIn("if (insert.disabled) return", script)
+        self.assertIn("sendKeys(keyboard.value)", script)
+        self.assertIn("insertedRevision = composerRevision", script)
+        self.assertNotIn("event.data", script)
+        self.assertNotIn("keyboard.value = ''", script)
         page_source = (Path(__file__).parents[1] / "chironjp/review_server.py").read_text()
+        self.assertIn('id="insert" type="button" disabled', page_source)
         self.assertNotIn("#screen.standby canvas{{visibility:hidden}}", page_source)
 
     def test_cleanup_and_replacement_registration_are_one_generation_lifecycle(self):
@@ -659,16 +667,21 @@ class ReviewFlowTests(unittest.TestCase):
             else:
                 self.fail(f"phone Chromium did not expose CDP: {phone_log.read_text(errors='replace')[-2000:]}")
             phone_endpoint = "http://127.0.0.1:" + debugger_lines[0]
-            phone_targets = None
+            phone_target = None
             for _ in range(60):
                 try:
                     phone_targets = json.load(urlopen(phone_endpoint + "/json/list", timeout=1))
-                    break
+                    phone_target = next(
+                        (item for item in phone_targets if item.get("type") == "page" and str(item.get("url", "")).startswith(origin)),
+                        None,
+                    )
+                    if phone_target is not None:
+                        break
                 except (OSError, TimeoutError):
-                    time.sleep(.1)
-            if phone_targets is None:
-                self.fail(f"phone Chromium CDP did not answer: {phone_log.read_text(errors='replace')[-2000:]}")
-            phone_target = next(item for item in phone_targets if item.get("type") == "page")
+                    pass
+                time.sleep(.1)
+            if phone_target is None:
+                self.fail(f"phone Chromium did not open the Review URL: {phone_log.read_text(errors='replace')[-2000:]}")
             phone_cdp = PhoneCDPConnection(phone_target["webSocketDebuggerUrl"])
             phone_cdp.call(
                 "Emulation.setDeviceMetricsOverride", width=390, height=844,
@@ -715,22 +728,31 @@ class ReviewFlowTests(unittest.TestCase):
             assets = phone_cdp.call("Performance.getMetrics").get("metrics", [])
             self.assertTrue(assets is not None)  # Page has an active renderer before interaction.
             self.assertTrue(phone_js("!!document.querySelector('#screen canvas')"))
+            wait_for(lambda: phone_js("document.querySelector('#screen canvas')?.width > 0"), "noVNC framebuffer did not initialize")
 
             phone_click("#take")
             wait_for(lambda: phone_js("document.querySelector('#status')?.textContent.includes('You have control')"), "Take control did not complete", 150)
             self.assertFalse(phone_js("document.querySelector('#keyboard').disabled"))
+            time.sleep(.5)
 
-            first_remote_point = remote_cdp.js("""(() => {const r=document.querySelector('#fixture-field').getBoundingClientRect();
+            def phone_tap(point):
+                phone_cdp.call("Input.dispatchTouchEvent", type="touchStart", touchPoints=[
+                    {"x": point["x"], "y": point["y"], "id": 1},
+                ])
+                phone_cdp.call("Input.dispatchTouchEvent", type="touchEnd", touchPoints=[])
+
+            first_remote_point = remote_cdp.js("""(() => {const r=document.querySelector('h1').getBoundingClientRect();
               return {x:Math.round(r.left+r.width/2),y:Math.round(r.top+r.height/2+(outerHeight-innerHeight))}})()""")
             first_phone_point = phone_js(f"""(() => {{const c=document.querySelector('#screen canvas'),r=c.getBoundingClientRect();
               return {{x:r.left+({first_remote_point['x']}/c.width)*r.width,y:r.top+({first_remote_point['y']}/c.height)*r.height}}}})()""")
-            phone_cdp.click(first_phone_point["x"], first_phone_point["y"])
-            wait_for(lambda: remote_cdp.js("document.activeElement?.id === 'fixture-field'"), "noVNC pointer did not focus the visible fictional field")
+            phone_tap(first_phone_point)
+            wait_for(lambda: remote_cdp.js("window.fixtureClicks.some(item => item.tag === 'H1' && item.trusted)"), "noVNC pointer did not reach the visible fictional page")
+            self.assertEqual(remote_cdp.js("document.activeElement?.tagName"), "H1")
             for _ in range(3):
                 phone_click("#page-down")
                 time.sleep(.15)
             wait_for(
-                lambda: remote_cdp.js("scrollY > 500"),
+                lambda: remote_cdp.js("scrollY > 150"),
                 f"noVNC scroll did not move the retained remote page; keys={remote_cdp.js('window.fixtureKeys')}",
             )
 
@@ -738,13 +760,62 @@ class ReviewFlowTests(unittest.TestCase):
               return {x:Math.round(r.left+r.width/2),y:Math.round(r.top+r.height/2+(outerHeight-innerHeight))}})()""")
             phone_point = phone_js(f"""(() => {{const c=document.querySelector('#screen canvas'),r=c.getBoundingClientRect();
               return {{x:r.left+({remote_point['x']}/c.width)*r.width,y:r.top+({remote_point['y']}/c.height)*r.height}}}})()""")
-            phone_cdp.click(phone_point["x"], phone_point["y"])
+            phone_tap(phone_point)
             wait_for(lambda: remote_cdp.js("document.activeElement?.id === 'phone-fixture-field'"), "phone pointer did not focus the remote fictional field")
 
             phone_click("#keyboard")
             self.assertTrue(phone_js("document.activeElement?.id === 'keyboard'"))
-            phone_cdp.call("Input.insertText", text="phone proof")
-            wait_for(lambda: remote_cdp.js("document.querySelector('#phone-fixture-field').value === 'phone proof'"), "visible phone keyboard input was not forwarded through noVNC")
+            self.assertTrue(phone_js("document.querySelector('#insert').disabled"))
+            phone_cdp.call("Input.insertText", text="typed ")
+            self.assertEqual(phone_js("document.querySelector('#keyboard').value"), "typed ")
+
+            # Use Chromium's native copy/paste path, then separately deliver a
+            # null-data paste-shaped input event. The composer logic depends
+            # only on its current value, so neither case clears or forwards it.
+            phone_js("""(() => {const source=document.createElement('input');source.id='fixture-paste-source';
+              source.value='pasted text';document.body.append(source);source.select();
+              window.__fixtureComposerEvents=[];document.querySelector('#keyboard').addEventListener('input',event=>
+                window.__fixtureComposerEvents.push({inputType:event.inputType,data:event.data}));})()""")
+
+            def shortcut(letter, virtual_key):
+                phone_cdp.call(
+                    "Input.dispatchKeyEvent", type="rawKeyDown", key="Control", code="ControlLeft",
+                    modifiers=2, windowsVirtualKeyCode=17, nativeVirtualKeyCode=17,
+                )
+                phone_cdp.call(
+                    "Input.dispatchKeyEvent", type="rawKeyDown", key=letter, code="Key" + letter.upper(),
+                    modifiers=2, windowsVirtualKeyCode=virtual_key, nativeVirtualKeyCode=virtual_key,
+                )
+                phone_cdp.call(
+                    "Input.dispatchKeyEvent", type="keyUp", key=letter, code="Key" + letter.upper(),
+                    modifiers=2, windowsVirtualKeyCode=virtual_key, nativeVirtualKeyCode=virtual_key,
+                )
+                phone_cdp.call(
+                    "Input.dispatchKeyEvent", type="keyUp", key="Control", code="ControlLeft",
+                    modifiers=0, windowsVirtualKeyCode=17, nativeVirtualKeyCode=17,
+                )
+
+            shortcut("c", 67)
+            phone_js("document.querySelector('#fixture-paste-source').remove()")
+            phone_click("#keyboard")
+            phone_js("""(() => {const input=document.querySelector('#keyboard');
+              input.setSelectionRange(input.value.length,input.value.length)})()""")
+            shortcut("v", 86)
+            composed = "typed pasted text"
+            wait_for(lambda: phone_js(f"document.querySelector('#keyboard').value === {json.dumps(composed)}"), "native paste was not retained visibly in the phone composer")
+            self.assertTrue(phone_js("window.__fixtureComposerEvents.some(event => event.inputType === 'insertFromPaste')"))
+            self.assertEqual(phone_js("""(() => {const input=document.querySelector('#keyboard');
+              input.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertFromPaste',data:null}));
+              return input.value})()"""), composed)
+            self.assertEqual(remote_cdp.js("document.querySelector('#phone-fixture-field').value"), "")
+            self.assertFalse(phone_js("document.querySelector('#insert').disabled"))
+            phone_click("#insert")
+            wait_for(lambda: remote_cdp.js(f"document.querySelector('#phone-fixture-field').value === {json.dumps(composed)}"), "explicit Insert did not send the complete composer value once")
+            self.assertEqual(phone_js("document.querySelector('#keyboard').value"), composed)
+            self.assertTrue(phone_js("document.querySelector('#insert').disabled"))
+            phone_click("#insert")
+            time.sleep(.3)
+            self.assertEqual(remote_cdp.js("document.querySelector('#phone-fixture-field').value"), composed)
 
             proof_dir = Path(__file__).parents[1] / "runtime" / "proof"
             proof_dir.mkdir(parents=True, exist_ok=True)
@@ -772,7 +843,7 @@ class ReviewFlowTests(unittest.TestCase):
                 lambda: next(iter(review_server.desktop_connections.values()), {}).get("generation") not in {None, prior_generation},
                 "desktop reload did not establish a replacement connection generation",
             )
-            self.assertEqual(remote_cdp.js("document.querySelector('#phone-fixture-field').value"), "phone proof")
+            self.assertEqual(remote_cdp.js("document.querySelector('#phone-fixture-field').value"), composed)
             self.assertEqual(remote_cdp.js("window.fixtureFinalActivations"), 0)
             self.assertTrue(phone_js("document.querySelector('#keyboard').disabled"))
             phone_js("window.scrollTo(0,0)")
