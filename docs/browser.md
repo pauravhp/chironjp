@@ -52,6 +52,14 @@ isolating each attempt; `BH_RUNTIME_DIR_SHARED` is deliberately absent. The
 worker must preserve those values. Using an unnamed or shared daemon can attach
 it to the wrong browser.
 
+Before invoking the browser model, the runner uses that same exact environment
+and existing target to switch the isolated Harness daemon to the designated tab
+and require a trivial `Runtime.evaluate` round trip. A failed readiness check
+stops only that named daemon, records `browser_transport_unhealthy`, and leaves
+the logical application, worker ownership, and target binding available for a
+same-worker retry. Passing this check is transport readiness, not proof that the
+later model run or employer preparation succeeded.
+
 A safe preparation pass is:
 
 1. Select and verify the exact retained employer target from the run brief.

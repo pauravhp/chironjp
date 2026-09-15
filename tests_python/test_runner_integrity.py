@@ -14,8 +14,10 @@ from chironjp.runner import (
     _EMPLOYER_CONSTRAINTS_JS,
     _IDENTITY_JS,
     _browser_daemon_name,
+    _browser_environment,
     _browser_runtime_dir,
     _ensure_application_target,
+    _preflight_browser_transport,
     _validated_employer_constraints,
     claim_and_run,
     finish_review,
@@ -70,6 +72,92 @@ class RunnerIntegrityTests(unittest.TestCase):
 
     def tearDown(self):
         self.fixture.tearDown()
+
+    def test_browser_preflight_binds_exact_target_and_proves_runtime(self):
+        context = self.store.attempt_context("att-one")
+        workspace = self.worker.workspace / "attempts" / "att-one"
+        workspace.mkdir(parents=True, exist_ok=True)
+        environment = _browser_environment(
+            self.registry, self.worker, context, "att-one", workspace,
+        )
+        marker = "CHIRONJP_BROWSER_PREFLIGHT_OK:target-one:2"
+        completed = subprocess.CompletedProcess(
+            [environment["CHIRONJP_BROWSER_HARNESS"]], 0, stdout=marker + "\n",
+        )
+        with patch("chironjp.runner.subprocess.run", return_value=completed) as invoked:
+            _preflight_browser_transport(workspace, environment, "target-one")
+        command = invoked.call_args.args[0]
+        self.assertEqual(command, [environment["CHIRONJP_BROWSER_HARNESS"]])
+        script = invoked.call_args.kwargs["input"]
+        self.assertIn("switch_tab(expected)", script)
+        self.assertIn("value = js('1+1')", script)
+        self.assertIn("current.get('targetId') != expected", script)
+        self.assertEqual(
+            (workspace / "browser-preflight.log").read_text(encoding="utf-8"),
+            marker + "\n",
+        )
+
+    def test_failed_browser_preflight_stops_exact_daemon_and_preserves_retry_owner(self):
+        context = self.store.attempt_context("att-one")
+        target = {"id": "target-one", "url": context["start_url"], "type": "page"}
+        with patch("chironjp.runner.start_chromium"), \
+             patch("chironjp.runner._ensure_application_target", return_value=target), \
+             patch(
+                 "chironjp.runner._preflight_browser_transport",
+                 side_effect=RuntimeError("transport unhealthy"),
+             ), \
+             patch("chironjp.runner.hermes_cli") as hermes:
+            with self.assertRaisesRegex(RuntimeError, "transport unhealthy"):
+                run_attempt(self.store, self.registry, "att-one", timeout_seconds=3)
+        hermes.assert_not_called()
+        failed = self.store.attempt_context("att-one")
+        self.assertEqual(failed["attempt_status"], "failed")
+        connection = self.store.connect()
+        try:
+            failure_code = connection.execute(
+                "SELECT failure_code FROM attempts WHERE id='att-one'",
+            ).fetchone()[0]
+        finally:
+            connection.close()
+        self.assertEqual(failure_code, "browser_transport_unhealthy")
+        self.assertEqual(failed["designated_target_id"], "target-one")
+        retried = self.store.claim_package("pkg-one", "worker-one")
+        self.assertEqual(retried["retry_of_attempt_id"], "att-one")
+        retry_context = self.store.attempt_context(retried["id"])
+        self.assertEqual(retry_context["retry_target_id"], "target-one")
+
+    def test_browser_preflight_failure_reloads_only_its_named_daemon(self):
+        context = self.store.attempt_context("att-one")
+        workspace = self.worker.workspace / "attempts" / "att-one"
+        workspace.mkdir(parents=True, exist_ok=True)
+        environment = _browser_environment(
+            self.registry, self.worker, context, "att-one", workspace,
+        )
+        failed = subprocess.CompletedProcess(
+            [environment["CHIRONJP_BROWSER_HARNESS"]], 1,
+            stdout="Runtime.evaluate timed out\n",
+        )
+        stopped = subprocess.CompletedProcess(
+            [environment["CHIRONJP_BROWSER_HARNESS"], "--reload"], 0,
+        )
+        with patch(
+            "chironjp.runner.subprocess.run", side_effect=[failed, stopped],
+        ) as invoked:
+            with self.assertRaisesRegex(RuntimeError, "transport is unhealthy"):
+                _preflight_browser_transport(workspace, environment, "target-one")
+        self.assertEqual(invoked.call_count, 2)
+        self.assertEqual(
+            invoked.call_args_list[1].args[0],
+            [environment["CHIRONJP_BROWSER_HARNESS"], "--reload"],
+        )
+        self.assertEqual(
+            invoked.call_args_list[1].kwargs["env"]["BU_NAME"],
+            environment["BU_NAME"],
+        )
+        self.assertEqual(
+            invoked.call_args_list[1].kwargs["env"]["BH_RUNTIME_DIR"],
+            environment["BH_RUNTIME_DIR"],
+        )
 
     def _retarget(self, start_url: str, review_url: str, official_identity: str) -> dict[str, object]:
         with self.store.immediate() as connection:
@@ -322,6 +410,7 @@ class RunnerIntegrityTests(unittest.TestCase):
         target = {"id": "target-one", "url": context["start_url"], "type": "page"}
         with patch("chironjp.runner.start_chromium"), \
              patch("chironjp.runner._ensure_application_target", return_value=target), \
+             patch("chironjp.runner._preflight_browser_transport"), \
              patch("chironjp.runner.hermes_cli", return_value="/fixture/hermes"), \
              patch.dict("os.environ", {"BH_RUNTIME_DIR_SHARED": "1"}), \
              patch("chironjp.runner.subprocess.run", side_effect=run_process):
@@ -372,6 +461,7 @@ class RunnerIntegrityTests(unittest.TestCase):
         target = {"id": "target-one", "url": context["start_url"], "type": "page"}
         with patch("chironjp.runner.start_chromium"), \
              patch("chironjp.runner._ensure_application_target", return_value=target), \
+             patch("chironjp.runner._preflight_browser_transport"), \
              patch("chironjp.runner.hermes_cli", return_value="/fixture/hermes"), \
              patch("chironjp.runner.subprocess.run", side_effect=subprocess.TimeoutExpired("hermes", 1)):
             result = run_attempt(self.store, self.registry, "att-one", timeout_seconds=1)

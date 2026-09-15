@@ -30,7 +30,10 @@ RUN_PROMPT = """Own the one browser-preparation request in
 $BH_AGENT_WORKSPACE/run-brief.json. Use chiron-application-executor and the
 copied agent_helpers.py. Prepare the exact retained target to guarded Review;
 invoke the browser runtime only through $CHIRONJP_BROWSER_HARNESS and preserve
-the supplied BU_NAME. Never activate a final action. Write review.json with only the documented
+the supplied BU_NAME. Start with the exact target bound by controller preflight;
+do not reset healthy transport or create or substitute another tab. On a
+demonstrated transport failure, recover only this isolated daemon, then rebind
+and verify the same target. Never activate a final action. Write review.json with only the documented
 fields, then execute finish_argv as an argv array without a shell. Exit while
 leaving Chromium and the exact application target open."""
 
@@ -51,6 +54,89 @@ def _browser_runtime_dir(
 ) -> Path:
     identity = f"{worker_id}:{application_id}:{attempt_id}".encode("utf-8")
     return runtime_root / "bh" / hashlib.sha256(identity).hexdigest()[:16]
+
+
+def _browser_environment(
+    registry: Registry, worker: Worker, context: Mapping[str, Any],
+    attempt_id: str, workspace: Path,
+) -> dict[str, str]:
+    browser_bin = registry.runtime_root / "browser-venv" / "bin"
+    runtime_dir = _browser_runtime_dir(
+        registry.runtime_root, worker.id, str(context["application_id"]), attempt_id,
+    )
+    private_dir(runtime_dir)
+    environment = {
+        **os.environ,
+        "HERMES_HOME": str(worker.hermes_home),
+        "PATH": f"{browser_bin}:{os.environ.get('PATH', '')}",
+        "CHIRONJP_BROWSER_HARNESS": str(browser_bin / "browser-harness"),
+        "CHIRONJP_BROWSER_USE": str(browser_bin / "browser-use"),
+        "BU_NAME": _browser_daemon_name(
+            worker.id, str(context["application_id"]), attempt_id,
+        ),
+        "BROWSER_CDP_URL": worker.cdp_url,
+        "BU_CDP_URL": worker.cdp_url,
+        "BH_AGENT_WORKSPACE": str(workspace),
+        "BH_RUNTIME_DIR": str(runtime_dir),
+        "BH_TMP_DIR": str(workspace),
+        "CHIRON_APPLICATION_ID": str(context["application_id"]),
+        "CHIRON_ATTEMPT_ID": attempt_id,
+        "PYTHONPATH": f"{REPO_ROOT}:{os.environ.get('PYTHONPATH', '')}",
+    }
+    # Browser Harness 0.1.9 uses a constant ``bu.sock`` name when this flag is
+    # absent. Isolation comes from the short per-attempt directory above; a
+    # shared/name-suffixed socket can exceed Linux's AF_UNIX path limit.
+    environment.pop("BH_RUNTIME_DIR_SHARED", None)
+    return environment
+
+
+def _stop_browser_daemon(workspace: Path, environment: Mapping[str, str], log_path: Path) -> None:
+    try:
+        with log_path.open("ab", buffering=0) as log:
+            private_file(log_path)
+            subprocess.run(
+                [environment["CHIRONJP_BROWSER_HARNESS"], "--reload"],
+                cwd=workspace, env=dict(environment), stdout=log,
+                stderr=subprocess.STDOUT, timeout=20, check=False,
+            )
+    except (OSError, subprocess.SubprocessError):
+        pass
+
+
+def _preflight_browser_transport(
+    workspace: Path, environment: Mapping[str, str], target_id: str,
+) -> None:
+    marker = f"CHIRONJP_BROWSER_PREFLIGHT_OK:{target_id}:2"
+    script = f"""expected = {target_id!r}
+current = current_tab()
+if current.get('targetId') != expected:
+    switch_tab(expected)
+current = current_tab()
+if current.get('targetId') != expected:
+    raise RuntimeError('browser preflight did not retain the designated target')
+value = js('1+1')
+if value != 2:
+    raise RuntimeError('browser preflight Runtime.evaluate returned an unexpected value')
+print({marker!r})
+"""
+    log_path = workspace / "browser-preflight.log"
+    try:
+        result = subprocess.run(
+            [environment["CHIRONJP_BROWSER_HARNESS"]], input=script,
+            cwd=workspace, env=dict(environment), text=True,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            timeout=35, check=False,
+        )
+        log_path.write_text(result.stdout or "", encoding="utf-8")
+        private_file(log_path)
+        if result.returncode != 0 or marker not in (result.stdout or ""):
+            raise RuntimeError("designated-target Browser Harness preflight failed")
+    except (OSError, subprocess.SubprocessError, RuntimeError) as exc:
+        if not log_path.exists():
+            log_path.write_text(f"{type(exc).__name__}: browser transport preflight failed\n", encoding="utf-8")
+            private_file(log_path)
+        _stop_browser_daemon(workspace, environment, log_path)
+        raise RuntimeError("designated-target Browser Harness transport is unhealthy") from exc
 
 
 def prepare_workspace(store: Store, registry: Registry, attempt_id: str) -> Path:
@@ -443,12 +529,15 @@ def run_attempt(
     brief_path.write_text(json.dumps(brief, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     private_file(brief_path)
     usage_path = workspace / "usage.json"
-    browser_bin = registry.runtime_root / "browser-venv" / "bin"
-    daemon_name = _browser_daemon_name(worker.id, str(context["application_id"]), attempt_id)
-    runtime_dir = _browser_runtime_dir(
-        registry.runtime_root, worker.id, str(context["application_id"]), attempt_id,
-    )
-    private_dir(runtime_dir)
+    environment = _browser_environment(registry, worker, context, attempt_id, workspace)
+    try:
+        _preflight_browser_transport(workspace, environment, target_id)
+    except RuntimeError as exc:
+        store.fail_attempt(
+            attempt_id, code="browser_transport_unhealthy",
+            detail=f"{type(exc).__name__}: {exc}",
+        )
+        raise
     command = [
         hermes_cli(), "-p", worker.hermes_profile,
         "--model", WORKER_MODEL, "--provider", WORKER_PROVIDER,
@@ -456,26 +545,6 @@ def run_attempt(
         "--skills", "chiron-application-executor", "--usage-file", str(usage_path),
         "--oneshot", RUN_PROMPT.replace("$BH_AGENT_WORKSPACE", str(workspace)),
     ]
-    environment = {
-        **os.environ,
-        "HERMES_HOME": str(worker.hermes_home),
-        "PATH": f"{browser_bin}:{os.environ.get('PATH', '')}",
-        "CHIRONJP_BROWSER_HARNESS": str(browser_bin / "browser-harness"),
-        "CHIRONJP_BROWSER_USE": str(browser_bin / "browser-use"),
-        "BU_NAME": daemon_name,
-        "BROWSER_CDP_URL": worker.cdp_url,
-        "BU_CDP_URL": worker.cdp_url,
-        "BH_AGENT_WORKSPACE": str(workspace),
-        "BH_RUNTIME_DIR": str(runtime_dir),
-        "BH_TMP_DIR": str(workspace),
-        "CHIRON_APPLICATION_ID": str(context["application_id"]),
-        "CHIRON_ATTEMPT_ID": attempt_id,
-        "PYTHONPATH": f"{REPO_ROOT}:{os.environ.get('PYTHONPATH', '')}",
-    }
-    # Browser Harness 0.1.9 uses a constant ``bu.sock`` name when this flag is
-    # absent. Isolation comes from the short per-attempt directory above; a
-    # shared/name-suffixed socket can exceed Linux's AF_UNIX path limit.
-    environment.pop("BH_RUNTIME_DIR_SHARED", None)
     log_path = workspace / "worker.log"
     with log_path.open("ab", buffering=0) as log:
         private_file(log_path)

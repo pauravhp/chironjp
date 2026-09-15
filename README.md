@@ -38,7 +38,8 @@ Start with [setup](docs/setup.md), then follow the concrete
 [source-to-Review runtime](docs/runtime.md). [Runtime dependencies](docs/dependencies.md)
 separates tested install defaults from behavioral compatibility, and the
 [proof matrix](docs/proof.md) distinguishes fixture checks from deployment or
-employer evidence.
+employer evidence. For guided agentic onboarding, use the public
+[`chiron-setup` skill](skills/chiron-setup/SKILL.md).
 
 The first public source is the a16z Speedrun Talent feed adaptation credited
 above. Photon/iMessage remains optional and requires the owner-authorized real
