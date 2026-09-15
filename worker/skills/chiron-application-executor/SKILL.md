@@ -28,12 +28,12 @@ for the exact workspace-local helper signatures.
 
 Invoke the exact executable supplied in `CHIRONJP_BROWSER_HARNESS`; do not pick
 a repository or shared virtual environment. Preserve the controller-supplied
-`BU_NAME`, `BU_CDP_URL`, and Browser Harness runtime-directory environment on
-every call so the attempt cannot attach to another daemon or browser. The
-controller has already switched that daemon to the brief's exact target and
+`BU_CDP_URL` and Browser Harness runtime-directory environment on every call so
+the attempt cannot attach to another daemon or browser; do not add or override
+`BU_NAME`. The controller has already bound that daemon to the brief's exact target and
 proved `Runtime.evaluate`. Do not reset a healthy transport, create a replacement
 tab, or substitute another target. On demonstrated transport failure, recover
-only this attempt's isolated daemon, then rebind and verify the same target
+only this worker's isolated daemon, then rebind and verify the same target
 before continuing.
 
 For an attached frame, use the exact CDP session id. Never pass a frame target

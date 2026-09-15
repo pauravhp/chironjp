@@ -13,7 +13,6 @@ from chironjp import browser_tools
 from chironjp.runner import (
     _EMPLOYER_CONSTRAINTS_JS,
     _IDENTITY_JS,
-    _browser_daemon_name,
     _browser_environment,
     _browser_runtime_dir,
     _ensure_application_target,
@@ -47,18 +46,19 @@ class ScriptedCDP:
 
 
 class RunnerIntegrityTests(unittest.TestCase):
-    def test_browser_daemon_identity_binds_worker_application_and_attempt(self):
-        baseline = _browser_daemon_name("worker-one", "app-one", "att-one")
-        self.assertRegex(baseline, r"^chironjp_[0-9a-f]{32}$")
-        self.assertNotEqual(baseline, _browser_daemon_name("worker-two", "app-one", "att-one"))
-        self.assertNotEqual(baseline, _browser_daemon_name("worker-one", "app-two", "att-one"))
-        self.assertNotEqual(baseline, _browser_daemon_name("worker-one", "app-one", "att-two"))
-        runtime = _browser_runtime_dir(
-            Path("/srv/chironjp/runtime"), "worker-one", "app-one", "att-one",
-        )
+    def test_browser_runtime_identity_is_stable_per_worker_and_short(self):
+        runtime = _browser_runtime_dir(Path("/srv/chironjp/runtime"), "worker-one")
         self.assertEqual(runtime.parent, Path("/srv/chironjp/runtime/bh"))
         self.assertRegex(runtime.name, r"^[0-9a-f]{16}$")
         self.assertLess(len(str(runtime / "bu.sock").encode()), 108)
+        self.assertEqual(
+            runtime,
+            _browser_runtime_dir(Path("/srv/chironjp/runtime"), "worker-one"),
+        )
+        self.assertNotEqual(
+            runtime,
+            _browser_runtime_dir(Path("/srv/chironjp/runtime"), "worker-two"),
+        )
 
     def setUp(self):
         self.fixture = review_flow_fixtures.ReviewFlowTests(
@@ -126,7 +126,7 @@ class RunnerIntegrityTests(unittest.TestCase):
         retry_context = self.store.attempt_context(retried["id"])
         self.assertEqual(retry_context["retry_target_id"], "target-one")
 
-    def test_browser_preflight_failure_reloads_only_its_named_daemon(self):
+    def test_browser_preflight_failure_reloads_only_its_worker_daemon(self):
         context = self.store.attempt_context("att-one")
         workspace = self.worker.workspace / "attempts" / "att-one"
         workspace.mkdir(parents=True, exist_ok=True)
@@ -150,10 +150,7 @@ class RunnerIntegrityTests(unittest.TestCase):
             invoked.call_args_list[1].args[0],
             [environment["CHIRONJP_BROWSER_HARNESS"], "--reload"],
         )
-        self.assertEqual(
-            invoked.call_args_list[1].kwargs["env"]["BU_NAME"],
-            environment["BU_NAME"],
-        )
+        self.assertNotIn("BU_NAME", invoked.call_args_list[1].kwargs["env"])
         self.assertEqual(
             invoked.call_args_list[1].kwargs["env"]["BH_RUNTIME_DIR"],
             environment["BH_RUNTIME_DIR"],
@@ -412,7 +409,7 @@ class RunnerIntegrityTests(unittest.TestCase):
              patch("chironjp.runner._ensure_application_target", return_value=target), \
              patch("chironjp.runner._preflight_browser_transport"), \
              patch("chironjp.runner.hermes_cli", return_value="/fixture/hermes"), \
-             patch.dict("os.environ", {"BH_RUNTIME_DIR_SHARED": "1"}), \
+             patch.dict("os.environ", {"BH_RUNTIME_DIR_SHARED": "1", "BU_NAME": "host-default"}), \
              patch("chironjp.runner.subprocess.run", side_effect=run_process):
             result = run_attempt(self.store, self.registry, "att-one", timeout_seconds=3)
         self.assertEqual(result["state"], "failed")
@@ -431,13 +428,11 @@ class RunnerIntegrityTests(unittest.TestCase):
         self.assertEqual(captured["HERMES_HOME"], str(self.worker.hermes_home))
         self.assertNotIn("--in", captured["command"])
         self.assertEqual(captured["cwd"], Path(result["workspace"]))
-        self.assertRegex(captured["BU_NAME"], r"^chironjp_[0-9a-f]{32}$")
+        self.assertNotIn("BU_NAME", captured)
         self.assertNotIn("BH_RUNTIME_DIR_SHARED", captured)
         self.assertEqual(
             captured["BH_RUNTIME_DIR"],
-            str(_browser_runtime_dir(
-                self.registry.runtime_root, "worker-one", "app-one", "att-one",
-            )),
+            str(_browser_runtime_dir(self.registry.runtime_root, "worker-one")),
         )
         self.assertEqual(
             captured["CHIRONJP_BROWSER_HARNESS"],

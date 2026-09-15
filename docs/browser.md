@@ -44,18 +44,19 @@ worker workspace. A Browser Harness invocation imports the helpers and supplies
 its own `js`, `fill_input`, `click_at_xy`, and CDP callbacks. Attached iframe
 targets must use a real CDP `session_id`; document coordinates or `targetId`
 parameters are never silently treated as top-level viewport coordinates.
-The controller also supplies the exact Chiron-owned Browser Harness executable,
-a daemon name derived from the worker/application/attempt identity, and a short
-Chiron-owned runtime directory derived from that same identity. The directory
-keeps Browser Harness's `bu.sock` under the Linux Unix-socket path limit while
-isolating each attempt; `BH_RUNTIME_DIR_SHARED` is deliberately absent. The
-worker must preserve those values. Using an unnamed or shared daemon can attach
-it to the wrong browser.
+The controller also supplies the exact Chiron-owned Browser Harness executable
+and a short, private runtime directory derived from the worker identity. The
+directory keeps Browser Harness's sole `bu.sock` under the Linux Unix-socket
+path limit and remains stable across same-worker retries. `BU_NAME` and
+`BH_RUNTIME_DIR_SHARED` are deliberately absent: Browser Harness's default
+attach behavior is scoped by that per-worker socket directory and exact CDP
+endpoint, rather than falling through to a host-global daemon. The worker must
+preserve those values.
 
 Before invoking the browser model, the runner uses that same exact environment
-and existing target to switch the isolated Harness daemon to the designated tab
+and existing target to bind the isolated Harness daemon to the designated tab
 and require a trivial `Runtime.evaluate` round trip. A failed readiness check
-stops only that named daemon, records `browser_transport_unhealthy`, and leaves
+stops only that worker daemon, records `browser_transport_unhealthy`, and leaves
 the logical application, worker ownership, and target binding available for a
 same-worker retry. Passing this check is transport readiness, not proof that the
 later model run or employer preparation succeeded.

@@ -30,7 +30,8 @@ RUN_PROMPT = """Own the one browser-preparation request in
 $BH_AGENT_WORKSPACE/run-brief.json. Use chiron-application-executor and the
 copied agent_helpers.py. Prepare the exact retained target to guarded Review;
 invoke the browser runtime only through $CHIRONJP_BROWSER_HARNESS and preserve
-the supplied BU_NAME. Start with the exact target bound by controller preflight;
+the supplied isolated Browser Harness environment. Start with the exact target
+bound by controller preflight;
 do not reset healthy transport or create or substitute another tab. On a
 demonstrated transport failure, recover only this isolated daemon, then rebind
 and verify the same target. Never activate a final action. Write review.json with only the documented
@@ -44,15 +45,10 @@ def _workspace(worker: Worker, attempt_id: str) -> Path:
     return root
 
 
-def _browser_daemon_name(worker_id: str, application_id: str, attempt_id: str) -> str:
-    identity = f"{worker_id}:{application_id}:{attempt_id}".encode("utf-8")
-    return "chironjp_" + hashlib.sha256(identity).hexdigest()[:32]
-
-
 def _browser_runtime_dir(
-    runtime_root: Path, worker_id: str, application_id: str, attempt_id: str,
+    runtime_root: Path, worker_id: str,
 ) -> Path:
-    identity = f"{worker_id}:{application_id}:{attempt_id}".encode("utf-8")
+    identity = worker_id.encode("utf-8")
     return runtime_root / "bh" / hashlib.sha256(identity).hexdigest()[:16]
 
 
@@ -61,9 +57,7 @@ def _browser_environment(
     attempt_id: str, workspace: Path,
 ) -> dict[str, str]:
     browser_bin = registry.runtime_root / "browser-venv" / "bin"
-    runtime_dir = _browser_runtime_dir(
-        registry.runtime_root, worker.id, str(context["application_id"]), attempt_id,
-    )
+    runtime_dir = _browser_runtime_dir(registry.runtime_root, worker.id)
     private_dir(runtime_dir)
     environment = {
         **os.environ,
@@ -71,9 +65,6 @@ def _browser_environment(
         "PATH": f"{browser_bin}:{os.environ.get('PATH', '')}",
         "CHIRONJP_BROWSER_HARNESS": str(browser_bin / "browser-harness"),
         "CHIRONJP_BROWSER_USE": str(browser_bin / "browser-use"),
-        "BU_NAME": _browser_daemon_name(
-            worker.id, str(context["application_id"]), attempt_id,
-        ),
         "BROWSER_CDP_URL": worker.cdp_url,
         "BU_CDP_URL": worker.cdp_url,
         "BH_AGENT_WORKSPACE": str(workspace),
@@ -83,9 +74,11 @@ def _browser_environment(
         "CHIRON_ATTEMPT_ID": attempt_id,
         "PYTHONPATH": f"{REPO_ROOT}:{os.environ.get('PYTHONPATH', '')}",
     }
-    # Browser Harness 0.1.9 uses a constant ``bu.sock`` name when this flag is
-    # absent. Isolation comes from the short per-attempt directory above; a
-    # shared/name-suffixed socket can exceed Linux's AF_UNIX path limit.
+    # Match the proven Browser Harness lifecycle: its default daemon attaches
+    # an existing real target and survives attempt retries. It is not a shared
+    # host daemon because the private, stable per-worker directory below owns
+    # its sole ``bu.sock`` and the worker has an execution mutex.
+    environment.pop("BU_NAME", None)
     environment.pop("BH_RUNTIME_DIR_SHARED", None)
     return environment
 
@@ -154,10 +147,7 @@ def prepare_workspace(store: Store, registry: Registry, attempt_id: str) -> Path
         raise ValueError("canonical profile changed after package admission")
     profile = json.loads(profile_path.read_text(encoding="utf-8"))
     review_file = workspace / "review.json"
-    daemon_name = _browser_daemon_name(worker.id, str(context["application_id"]), attempt_id)
-    runtime_dir = _browser_runtime_dir(
-        registry.runtime_root, worker.id, str(context["application_id"]), attempt_id,
-    )
+    runtime_dir = _browser_runtime_dir(registry.runtime_root, worker.id)
     browser_bin = registry.runtime_root / "browser-venv" / "bin"
     brief = {
         "contract": "chironjp-browser-run-v1",
@@ -174,7 +164,7 @@ def prepare_workspace(store: Store, registry: Registry, attempt_id: str) -> Path
         "browser_runtime": {
             "browser_harness": str(browser_bin / "browser-harness"),
             "browser_use": str(browser_bin / "browser-use"),
-            "daemon_name": daemon_name,
+            "daemon_name": "default",
             "runtime_dir": str(runtime_dir),
         },
         "canonical_profile": profile,
